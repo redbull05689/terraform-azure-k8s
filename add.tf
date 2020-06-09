@@ -60,7 +60,7 @@ resource "azurerm_container_registry" "acr" {
 }
 
 resource "azurerm_role_assignment" "aks_sp_container_registry" {
-  scope                = "data.azurerm_container_registry.acr.id"
+  scope                = azurerm_container_registry.acr.id
   role_definition_name = "AcrPull"
   principal_id         = azuread_service_principal.aks_sp.object_id
 }

@@ -23,7 +23,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 
   service_principal {
     client_id     = azuread_service_principal.aks_sp.application_id
-    client_secret = "random_string.aks_sp_password.result"
+    client_secret = random_string.password.result
   }
 
   # tags {
