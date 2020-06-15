@@ -1,12 +1,8 @@
-### login to Azure
-az login
-
-
 
 ### Login to az cli as a subscrition owner
 az login
 ### Add principal
-az ad sp create-for-rbac --role=“Owner” --scopes="/subscriptions/c23293cc-6bd1-4b0a-bb98-4a4153b85776/resourceGroups/quantori"
+az ad sp create-for-rbac --role=“Owner” --scopes="/subscriptions/63b36228-9450-4bb7-8212-941bd58f513c/resourceGroups/quantori"
 
 ### Add credentials from new service principals to variables.tf
 azurerm_subscription_id
@@ -42,3 +38,5 @@ az acr login --name quantorireg
 
 ### Push test image from registry
 docker push quantorireg.azurecr.io/frontend:0.1
+
+az login --service-principal --username XXXXXXX --password XXXXXXX --tenant XXXXXX
