@@ -1,75 +1,82 @@
-1. Init remote state
 
-```bash
-$ terraform init \
-  -backend-config "storage_account_name=nictfremotestate" \
-  -backend-config="container_name=tfstate"
+### Login to az cli as a subscrition owner
+az login
+### Add principal
+az ad sp create-for-rbac --role=“Owner” --scopes="/subscriptions/63b36228-9450-4bb7-8212-941bd58f513c/resourceGroups/quantori"
+
+### Add credentials from new service principals to variables.tf
+azurerm_subscription_id
+azurerm_client_id
+azurerm_client_secret
+azurerm_tenant_id
+
+
+### Added cpecial permissions to principal for createting via web portal
+```
+portal.azure.com -> App registrations -> Api permossions -> Add permissions -> Azure active Directory Graph -> Application permission 
+-> Application ->  Application.readWrite.All -> Add permissions
+```
+Press button
+```
+Grant admin consent for Default Directory
 ```
 
-1. Create a plan
+### Init terraform provider
+terraform init
 
-```bash
-$ terraform plan -out out.plan
-Acquiring state lock. This may take a few moments...
-Refreshing Terraform state in-memory prior to plan...
-The refreshed state will be used to calculate this plan, but will not be
-persisted to local or remote state storage.
+### Plan
+terraform plan
+
+### Run
+terraform apply
+
+### Get credentials
+az aks get-credentials --name k8scluster --resource-group quantori
+
+### Login to ACR from laptop
+az acr login --name quantorireg
+
+### Push test image from registry
+docker push quantorireg.azurecr.io/frontend:0.1
+
+az login --service-principal --username XXXXXXX --password XXXXXXX --tenant XXXXXX
+
+kubectl create namespace ingress-basic
+
+helm upgrade --install nginx stable/nginx-ingress \
+    --namespace ingress-basic \
+    --set controller.replicaCount=1 \
+    --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
+    --set controller.service.loadBalancerIP="52.158.214.186"
 
 
-------------------------------------------------------------------------
+    kubectl create secret generic basic-auth --from-file=auth
 
-An execution plan has been generated and is shown below.
-Resource actions are indicated with the following symbols:
-  + create
 
-Terraform will perform the following actions:
 
-  + azurerm_kubernetes_cluster.k8s
-      id:                                         <computed>
-#...
+kubectl apply -f example_cluster-issuer-prod.yaml 
+ 
+kubectl apply -f example_certificates.yaml --validate=false
 
-Plan: 2 to add, 0 to change, 0 to destroy.
+kubectl apply -f example_ingress.yaml
 
-------------------------------------------------------------------------
 
-This plan was saved to: out.plan
 
-To perform exactly these actions, run the following command to apply:
-    terraform apply "out.plan"
+    helm upgrade --install postgres \
+             --set image.repository=postgres \
+             --set image.tag=13 \
+             --set postgresqlDataDir=/data/pgdata \
+             --set persistence.mountPath=/data \
+             --set postgresqlPassword=Password \
+             bitnami/postgresql -n bioeditor-stg
 
-Releasing state lock. This may take a few moments...
-```
+             helm uninstall postgres -n testpg
 
-1. Apply
+    helm upgrade --install redis \
+            --set password=5bnGEjrRCphFhJlzGdfs31jVzuqmGXgg \
+            --set cluster.enabled=false \
+            --set master.persistence.size=2Gi \
+            bitnami/redis -n bioeditor-qa
 
-```bash
-$ terraform apply out.plan
-Acquiring state lock. This may take a few moments...
-Releasing state lock. This may take a few moments...
-Acquiring state lock. This may take a few moments...
-azurerm_resource_group.k8s: Creating...
-  location: "" => "eastus"
-  name:     "" => "nic-k8s-vault"
-  tags.%:   "" => "<computed>"
 
-  #...
-
-azurerm_kubernetes_cluster.k8s: Still creating... (12m50s elapsed)
-azurerm_kubernetes_cluster.k8s: Still creating... (13m0s elapsed)
-azurerm_kubernetes_cluster.k8s: Still creating... (13m10s elapsed)
-azurerm_kubernetes_cluster.k8s: Creation complete after 13m10s (ID: /subscriptions/c0a607b2-6372-4ef3-abdb-...tainerService/managedClusters/k8svault)
-
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-Releasing state lock. This may take a few moments...
-
-Outputs:
-
-# Redacted
-```
-
-1. Save kube_config
-
-```bash
-$ echo "$(terraform output kube_config)" > ~/.kube/azurek8s.tf
-```
-
+    helm uninstall redis -n redistest
